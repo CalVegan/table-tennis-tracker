@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Tennis Score Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            color: #FFFFFF;
+            text-align: center;
+            padding: 10px;
+            margin: 0;
+            overflow-x: hidden;
+            background: #1E3A8A;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #pongCanvas {
+            display: block;
+            margin: 0 auto 10px;
+            width: 100%;
+            max-width: 400px;
+            height: 150px;
+            image-rendering: pixelated;
+            border: 2px solid #FFFFFF;
+        }
+
+        .content {
+            width: 100%;
+            max-width: 600px;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: clamp(16px, 5vw, 24px);
+            margin: 10px 0;
+            text-shadow: 2px 2px #000000;
+        }
+
+        h2 {
+            font-size: clamp(12px, 3vw, 16px);
+            margin-bottom: 10px;
+        }
+
+        input, select, button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 8px;
+            margin: 5px;
+            border: 2px solid #FFFFFF;
+            background: #60A5FA;
+            color: #FFFFFF;
+            box-shadow: 2px 2px #000000;
+            font-size: clamp(10px, 2.5vw, 14px);
+            width: 100%;
+            max-width: 200px;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            transition: background 0.2s;
+            padding: 10px;
+        }
+
+        button:hover, button:active {
+            background: #3B82F6;
+        }
+
+        table {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #FFFFFF;
+            font-size: clamp(10px, 2.5vw, 12px);
+        }
+
+        th {
+            background: #1E3A8A;
+        }
+
+        #comparison-result {
+            margin-top: 10px;
+            font-size: clamp(10px, 2.5vw, 12px);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border: 2px solid #FFFFFF;
+            display: inline-block;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        .section {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid #FFFFFF;
+            border-radius: 5px;
+        }
+
+        label {
+            font-size: clamp(10px, 2.5vw, 12px);
+            margin-right: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                flex-direction: column;
+            }
+            input, select, button {
+                width: 100%;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pongCanvas"></canvas>
+    <div class="content">
+        <h1>Table Tennis Score Tracker</h1>
+
+        <div class="section" id="add-player">
+            <h2>Add Player</h2>
+            <div class="input-group">
+                <input type="text" id="player-name" placeholder="Enter player name">
+                <button id="add-button">Add</button>
+            </div>
+        </div>
+
+        <div class="section" id="record-match">
+            <h2>Record Match</h2>
+            <div class="input-group">
+                <label for="winner">Winner:</label>
+                <select id="winner"></select>
+                <label for="loser">Loser:</label>
+                <select id="loser"></select>
+                <button id="record-button">Record</button>
+            </div>
+        </div>
+
+        <div class="section" id="leaderboard">
+            <h2>Leaderboard</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Wins</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+
+        <div class="section" id="compare-players">
+            <h2>Compare Players</h2>
+            <div class="input-group">
+                <select id="player1"></select>
+                <select id="player2"></select>
+                <button id="compare-button">Compare</button>
+            </div>
+            <div id="comparison-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load data from localStorage on page load
+        function loadData() {
+            const savedPlayers = localStorage.getItem('tableTennisPlayers');
+            const savedMatches = localStorage.getItem('tableTennisMatches');
+            if (savedPlayers) players = JSON.parse(savedPlayers);
+            if (savedMatches) matches = JSON.parse(savedMatches);
+            updateDropdowns();
+            updateLeaderboard();
+        }
+
+        let players = [];
+        let matches = [];
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('tableTennisPlayers', JSON.stringify(players));
+            localStorage.setItem('tableTennisMatches', JSON.stringify(matches));
+        }
+
+        // Add a new player
+        function addPlayer(name) {
+            if (name && !players.includes(name)) {
+                players.push(name);
+                saveData();
+                updateDropdowns();
+            }
+        }
+
+        // Record a match result
+        function recordMatch(winner, loser) {
+            if (winner && loser && winner !== loser && players.includes(winner) && players.includes(loser)) {
+                matches.push({ winner, loser });
+                saveData();
+                updateLeaderboard();
+            }
+        }
+
+        // Update dropdowns
+        function updateDropdowns() {
+            const winnerSelect = document.getElementById('winner');
+            const loserSelect = document.getElementById('loser');
+            const player1Select = document.getElementById('player1');
+            const player2Select = document.getElementById('player2');
+
+            [winnerSelect, loserSelect, player1Select, player2Select].forEach(select => {
+                select.innerHTML = '';
+                players.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player;
+                    option.textContent = player;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Update leaderboard
+        function updateLeaderboard() {
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = '';
+
+            const wins = players.map(player => ({
+                name: player,
+                wins: matches.filter(match => match.winner === player).length
+            }));
+
+            wins.sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name));
+
+            wins.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.name}</td>
+                    <td>${player.wins}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        // Compare players
+        function comparePlayers(player1, player2) {
+            if (!player1 || !player2
