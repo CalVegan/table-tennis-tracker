@@ -109,6 +109,19 @@
 
 
 document.getElementById("registerBtn").addEventListener("click", async () => {
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+  const selectedName = document.getElementById("userSelect").value;
+  if (!selectedName) {
+    alert("Please select a name.");
+    return;
+  }
+  currentUser = selectedName;
+  document.getElementById("registration").classList.add("hidden");
+  document.getElementById("mainApp").classList.remove("hidden");
+  document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
+  await populatePlayers();
+});
+
   const nameInput = document.getElementById("username").value.trim();
   if (!nameInput) {
     alert("Please enter a name.");
@@ -230,6 +243,26 @@ document.getElementById("matchForm").addEventListener("submit", async (e) => {
 
     await populatePlayers();
     await loadLeaderboard();
+    // Navigation Button Event Listeners
+document.getElementById("recordMatchTab").addEventListener("click", () => {
+  showTab("recordMatch");
+});
+document.getElementById("leaderboardTab").addEventListener("click", async () => {
+  showTab("leaderboard");
+  await loadLeaderboard();
+});
+document.getElementById("headToHeadTab").addEventListener("click", async () => {
+  showTab("headToHead");
+  await populatePlayers();
+});
+
+// Show Tab Function
+function showTab(tabId) {
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.classList.add("hidden");
+  });
+  document.getElementById(tabId).classList.remove("hidden");
+}
   </script>
 </body>
 </html>
