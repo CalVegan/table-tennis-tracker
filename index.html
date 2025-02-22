@@ -105,34 +105,57 @@
     const db = getFirestore(app);
     let currentUser = "";
 
-    async function populatePlayers() {
-      const playersSnapshot = await getDocs(collection(db, "players"));
-      const players = [];
-      playersSnapshot.forEach(doc => {
-        players.push(doc.data().name);
-      });
-      const uniquePlayers = [...new Set(players)].sort();
-      const userSelect = document.getElementById("userSelect");
-      userSelect.innerHTML = "";
-      uniquePlayers.forEach(name => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        userSelect.appendChild(option);
-      });
-    }
-    
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      const selectedName = document.getElementById("userSelect").value;
-      if (!selectedName) {
-        alert("Please select a name.");
-        return;
-      }
-      currentUser = selectedName;
-      document.getElementById("registration").classList.add("hidden");
-      document.getElementById("mainApp").classList.remove("hidden");
-      document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
+async function populatePlayers() {
+  const playersSnapshot = await getDocs(collection(db, "players"));
+  const players = [];
+  playersSnapshot.forEach(doc => {
+    players.push(doc.data().name);
+  });
+  const uniquePlayers = [...new Set(players)].sort();
+  const selects = [
+    document.getElementById("player1Select"),
+    document.getElementById("player2Select"),
+    document.getElementById("headPlayer1"),
+    document.getElementById("headPlayer2")
+  ];
+  selects.forEach(select => {
+    select.innerHTML = "";
+    uniquePlayers.forEach(name => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      select.appendChild(option);
     });
+  });
+}
+
+    document.getElementById("registerBtn").addEventListener("click", async () => {
+  const nameInput = document.getElementById("username").value.trim();
+  if (!nameInput) {
+    alert("Please enter a name.");
+    return;
+  }
+  currentUser = nameInput;
+  const playersSnapshot = await getDocs(collection(db, "players"));
+  let exists = false;
+  playersSnapshot.forEach(doc => {
+    if (doc.data().name.toLowerCase() === nameInput.toLowerCase()) {
+      exists = true;
+    }
+  });
+  if (!exists) {
+    await addDoc(collection(db, "players"), { name: nameInput });
+    alert("Registration successful!");
+  } else {
+    alert("Welcome back, " + nameInput + "!");
+  }
+  document.getElementById("registration").classList.add("hidden");
+  document.getElementById("mainApp").classList.remove("hidden");
+  document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
+  await populatePlayers();
+});
+
+   
 
     document.getElementById("registerBtn").addEventListener("click", async () => {
       const nameInput = document.getElementById("username").value.trim();
