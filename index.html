@@ -109,29 +109,7 @@
 
 
 document.getElementById("registerBtn").addEventListener("click", async () => {
-  const nameInput = document.getElementById("username").value.trim();
-  if (!nameInput) {
-    alert("Please enter a name.");
-    return;
-  }
-  currentUser = nameInput;
-  const playersSnapshot = await getDocs(collection(db, "players"));
-  let exists = false;
-  playersSnapshot.forEach(doc => {
-    if (doc.data().name.toLowerCase() === nameInput.toLowerCase()) {
-      exists = true;
-    }
-  });
-  if (!exists) {
-    await addDoc(collection(db, "players"), { name: nameInput });
-    alert("Registration successful!");
-  } else {
-    alert("Welcome back, " + nameInput + "!");
-  }
-  document.getElementById("registration").classList.add("hidden");
-  document.getElementById("mainApp").classList.remove("hidden");
-  document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
-  await populatePlayers();
+  
 });
   document.getElementById("loginBtn").addEventListener("click", async () => {
   const selectedName = document.getElementById("userSelect").value;
@@ -171,13 +149,14 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
   await populatePlayers();
 });
 
-   async function populatePlayers() {
+async function populatePlayers() {
   const playersSnapshot = await getDocs(collection(db, "players"));
   const players = [];
   playersSnapshot.forEach(doc => {
     players.push(doc.data().name);
   });
   const uniquePlayers = [...new Set(players)].sort();
+  console.log("Players Loaded:", uniquePlayers); // Debugging Line
   const selects = [
     document.getElementById("userSelect"),
     document.getElementById("player1Select"),
@@ -195,6 +174,7 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
     });
   });
 }
+
 
 document.getElementById("matchForm").addEventListener("submit", async (e) => {
   e.preventDefault();
