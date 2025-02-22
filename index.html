@@ -242,7 +242,7 @@ document.getElementById("matchForm").addEventListener("submit", async (e) => {
         leaderboardHTML += `<tr><td>${player}</td><td>${stats[player].wins}</td><td>${stats[player].losses}</td><td>${stats[player].played}</td><td>${ratio}</td></tr>`;
       }
       leaderboardHTML += "</table>";
-      document.getElementById("leaderboardContent").innerHTML = leaderboardHTML;
+     document.getElementById("leaderboardContentMain").innerHTML = leaderboardHTML;
     }
 
     await populatePlayers();
