@@ -46,9 +46,14 @@
 <body>
   <div id="registration" class="container">
     <h1>Table Tennis Champion</h1>
-    <p>Enter name to join League!:</p>
+    <p>Select your name to log in:</p>
+    <select id="userSelect"></select>
+    <button id="loginBtn">Log In</button>
+    <p>New player? Enter your name:</p>
     <input type="text" id="username" placeholder="Your Name">
     <button id="registerBtn">Register</button>
+    <h2>Leaderboard</h2>
+    <div id="leaderboardContent"></div>
   </div>
   <div id="mainApp" class="container hidden">
     <p id="welcomeMsg"></p>
@@ -70,7 +75,7 @@
     </div>
     <div id="leaderboard" class="tab hidden">
       <h2>Leaderboard</h2>
-      <div id="leaderboardContent"></div>
+      <div id="leaderboardContentMain"></div>
     </div>
     <div id="headToHead" class="tab hidden">
       <h2>Head-to-Head Comparison</h2>
@@ -87,19 +92,19 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
     
-const firebaseConfig = {
-  apiKey: "AIzaSyB_mdbJgrZMJwEk-qX-vfPvaFdr0l9JJew",
-  authDomain: "sample-firebase-ai-app-calvin.firebaseapp.com",
-  projectId: "calvin-a1167",
-  storageBucket: "sample-firebase-ai-app-calvin.firebasestorage.app",
-  messagingSenderId: "442340364198",
-  appId: "1:442340364198:web:5dd9af4bca81b645570967"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_mdbJgrZMJwEk-qX-vfPvaFdr0l9JJew",
+      authDomain: "sample-firebase-ai-app-calvin.firebaseapp.com",
+      projectId: "calvin-a1167",
+      storageBucket: "sample-firebase-ai-app-calvin.firebasestorage.app",
+      messagingSenderId: "442340364198",
+      appId: "1:442340364198:web:5dd9af4bca81b645570967"
+    };
     
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     let currentUser = "";
-    
+
     async function populatePlayers() {
       const playersSnapshot = await getDocs(collection(db, "players"));
       const players = [];
@@ -107,93 +112,40 @@ const firebaseConfig = {
         players.push(doc.data().name);
       });
       const uniquePlayers = [...new Set(players)].sort();
-      const selects = [
-        document.getElementById("player1Select"),
-        document.getElementById("player2Select"),
-        document.getElementById("headPlayer1"),
-        document.getElementById("headPlayer2")
-      ];
-      selects.forEach(select => {
-        select.innerHTML = "";
-        uniquePlayers.forEach(name => {
-          const option = document.createElement("option");
-          option.value = name;
-          option.textContent = name;
-          select.appendChild(option);
-        });
+      const userSelect = document.getElementById("userSelect");
+      userSelect.innerHTML = "";
+      uniquePlayers.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        userSelect.appendChild(option);
       });
     }
     
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const selectedName = document.getElementById("userSelect").value;
+      if (!selectedName) {
+        alert("Please select a name.");
+        return;
+      }
+      currentUser = selectedName;
+      document.getElementById("registration").classList.add("hidden");
+      document.getElementById("mainApp").classList.remove("hidden");
+      document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
+    });
+
     document.getElementById("registerBtn").addEventListener("click", async () => {
       const nameInput = document.getElementById("username").value.trim();
       if (!nameInput) {
         alert("Please enter a name.");
         return;
       }
-      currentUser = nameInput;
-      const playersSnapshot = await getDocs(collection(db, "players"));
-      let exists = false;
-      playersSnapshot.forEach(doc => {
-        if (doc.data().name.toLowerCase() === nameInput.toLowerCase()) {
-          exists = true;
-        }
-      });
-      if (!exists) {
-        await addDoc(collection(db, "players"), { name: nameInput });
-      }
-      document.getElementById("registration").classList.add("hidden");
-      document.getElementById("mainApp").classList.remove("hidden");
-      document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
+      await addDoc(collection(db, "players"), { name: nameInput });
+      alert("Registration successful!");
       await populatePlayers();
+      document.getElementById("username").value = "";
     });
-    
-    document.getElementById("recordMatchTab").addEventListener("click", () => {
-      showTab("recordMatch");
-    });
-    
-    document.getElementById("leaderboardTab").addEventListener("click", async () => {
-      showTab("leaderboard");
-      await loadLeaderboard();
-    });
-    
-    document.getElementById("headToHeadTab").addEventListener("click", async () => {
-      showTab("headToHead");
-      await populatePlayers();
-    });
-    
-    function showTab(tabId) {
-      document.querySelectorAll(".tab").forEach(tab => {
-        tab.classList.add("hidden");
-      });
-      document.getElementById(tabId).classList.remove("hidden");
-    }
-    
-    document.getElementById("matchForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const p1 = document.getElementById("player1Select").value;
-      const p2 = document.getElementById("player2Select").value;
-      const s1 = parseInt(document.getElementById("score1").value);
-      const s2 = parseInt(document.getElementById("score2").value);
-      if (p1 === p2) {
-        alert("Players must be different.");
-        return;
-      }
-      if (isNaN(s1) || isNaN(s2)) {
-        alert("Enter valid scores.");
-        return;
-      }
-      await addDoc(collection(db, "matches"), {
-        player1: p1,
-        player2: p2,
-        score1: s1,
-        score2: s2,
-        timestamp: new Date()
-      });
-      alert("Match recorded!");
-      document.getElementById("matchForm").reset();
-      await populatePlayers();
-    });
-    
+
     async function loadLeaderboard() {
       const matchesSnapshot = await getDocs(collection(db, "matches"));
       const stats = {};
@@ -207,13 +159,9 @@ const firebaseConfig = {
         } else if (score2 > score1) {
           winner = player2;
           loser = player1;
-        } else {
-          return;
         }
         [player1, player2].forEach(p => {
-          if (!stats[p]) {
-            stats[p] = { wins: 0, losses: 0, played: 0 };
-          }
+          if (!stats[p]) stats[p] = { wins: 0, losses: 0, played: 0 };
           stats[p].played++;
         });
         stats[winner].wins++;
@@ -222,63 +170,14 @@ const firebaseConfig = {
       let leaderboardHTML = "<table><tr><th>Player</th><th>Wins</th><th>Losses</th><th>Played</th><th>Win Ratio</th></tr>";
       for (let player in stats) {
         let ratio = stats[player].losses === 0 ? stats[player].wins : (stats[player].wins / stats[player].losses).toFixed(2);
-        leaderboardHTML += "<tr><td>" + player + "</td><td>" + stats[player].wins + "</td><td>" + stats[player].losses + "</td><td>" + stats[player].played + "</td><td>" + ratio + "</td></tr>";
+        leaderboardHTML += `<tr><td>${player}</td><td>${stats[player].wins}</td><td>${stats[player].losses}</td><td>${stats[player].played}</td><td>${ratio}</td></tr>`;
       }
       leaderboardHTML += "</table>";
       document.getElementById("leaderboardContent").innerHTML = leaderboardHTML;
     }
-    
-    document.getElementById("headToHeadForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const playerA = document.getElementById("headPlayer1").value;
-      const playerB = document.getElementById("headPlayer2").value;
-      if (playerA === playerB) {
-        alert("Select two different players.");
-        return;
-      }
-      const matchesSnapshot = await getDocs(collection(db, "matches"));
-      let aWins = 0, bWins = 0;
-      matchesSnapshot.forEach(doc => {
-        const data = doc.data();
-        const { player1, player2, score1, score2 } = data;
-        if ((player1 === playerA && player2 === playerB) || (player1 === playerB && player2 === playerA)) {
-          if (score1 > score2) {
-            if (player1 === playerA) {
-              aWins++;
-            } else {
-              bWins++;
-            }
-          } else if (score2 > score1) {
-            if (player2 === playerA) {
-              aWins++;
-            } else {
-              bWins++;
-            }
-          }
-        }
-      });
-      let resultHTML = "<p>" + playerA + " won " + aWins + " times against " + playerB + ".</p>";
-      resultHTML += "<p>" + playerB + " won " + bWins + " times against " + playerA + ".</p>";
-      document.getElementById("headToHeadResult").innerHTML = resultHTML;
-    });
-   // Test Firestore Connection
-async function testFirestoreConnection() {
-  console.log("Testing Firestore connection...");
-  try {
-    const testRef = collection(db, "testCollection");
-    await addDoc(testRef, {
-      testField: "testValue",
-      timestamp: new Date()
-    });
-    console.log("Test write successful");
-  } catch (error) {
-    console.error("Test write failed:", error);
-  }
-}
 
-// Run the test
-testFirestoreConnection();
-
+    await populatePlayers();
+    await loadLeaderboard();
   </script>
 </body>
 </html>
