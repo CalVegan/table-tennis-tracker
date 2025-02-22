@@ -161,7 +161,14 @@
           loser = player1;
         }
         [player1, player2].forEach(p => {
-          if (!stats[p]) stats[p] = { wins: 0, losses: 0, played: 0 };
+         if (!stats[p]) {
+  stats[p] = { wins: 0, losses: 0, played: 0 };
+} else {
+  if (!stats[p].wins) stats[p].wins = 0;
+  if (!stats[p].losses) stats[p].losses = 0;
+  if (!stats[p].played) stats[p].played = 0;
+}
+
           stats[p].played++;
         });
         stats[winner].wins++;
