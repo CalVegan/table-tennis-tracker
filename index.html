@@ -260,6 +260,43 @@ document.getElementById("headToHeadTab").addEventListener("click", async () => {
   await populatePlayers();
 });
 
+    // Head-to-Head Form Event Listener
+document.getElementById("headToHeadForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const playerA = document.getElementById("headPlayer1").value;
+  const playerB = document.getElementById("headPlayer2").value;
+  if (playerA === playerB) {
+    alert("Select two different players.");
+    return;
+  }
+  const matchesSnapshot = await getDocs(collection(db, "matches"));
+  let aWins = 0, bWins = 0;
+  matchesSnapshot.forEach(doc => {
+    const data = doc.data();
+    const { player1, player2, score1, score2 } = data;
+    if ((player1 === playerA && player2 === playerB) || (player1 === playerB && player2 === playerA)) {
+      if (score1 > score2) {
+        if (player1 === playerA) {
+          aWins++;
+        } else {
+          bWins++;
+        }
+      } else if (score2 > score1) {
+        if (player2 === playerA) {
+          aWins++;
+        } else {
+          bWins++;
+        }
+      }
+    }
+  });
+  let resultHTML = "<h3>Head-to-Head Results</h3>";
+  resultHTML += `<p>${playerA} won ${aWins} times against ${playerB}.</p>`;
+  resultHTML += `<p>${playerB} won ${bWins} times against ${playerA}.</p>`;
+  document.getElementById("headToHeadResult").innerHTML = resultHTML;
+});
+
+    
 // Show Tab Function
 function showTab(tabId) {
   document.querySelectorAll(".tab").forEach(tab => {
