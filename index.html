@@ -5,6 +5,7 @@
   <title>Table Tennis Champion</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+ <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
     body {
       background-color: #000;
@@ -105,31 +106,9 @@
     const db = getFirestore(app);
     let currentUser = "";
 
-async function populatePlayers() {
-  const playersSnapshot = await getDocs(collection(db, "players"));
-  const players = [];
-  playersSnapshot.forEach(doc => {
-    players.push(doc.data().name);
-  });
-  const uniquePlayers = [...new Set(players)].sort();
-  const selects = [
-    document.getElementById("player1Select"),
-    document.getElementById("player2Select"),
-    document.getElementById("headPlayer1"),
-    document.getElementById("headPlayer2")
-  ];
-  selects.forEach(select => {
-    select.innerHTML = "";
-    uniquePlayers.forEach(name => {
-      const option = document.createElement("option");
-      option.value = name;
-      option.textContent = name;
-      select.appendChild(option);
-    });
-  });
-}
 
-    document.getElementById("registerBtn").addEventListener("click", async () => {
+
+document.getElementById("registerBtn").addEventListener("click", async () => {
   const nameInput = document.getElementById("username").value.trim();
   if (!nameInput) {
     alert("Please enter a name.");
@@ -155,19 +134,62 @@ async function populatePlayers() {
   await populatePlayers();
 });
 
-   
-
-    document.getElementById("registerBtn").addEventListener("click", async () => {
-      const nameInput = document.getElementById("username").value.trim();
-      if (!nameInput) {
-        alert("Please enter a name.");
-        return;
-      }
-      await addDoc(collection(db, "players"), { name: nameInput });
-      alert("Registration successful!");
-      await populatePlayers();
-      document.getElementById("username").value = "";
+   async function populatePlayers() {
+  const playersSnapshot = await getDocs(collection(db, "players"));
+  const players = [];
+  playersSnapshot.forEach(doc => {
+    players.push(doc.data().name);
+  });
+  const uniquePlayers = [...new Set(players)].sort();
+  const selects = [
+    document.getElementById("userSelect"),
+    document.getElementById("player1Select"),
+    document.getElementById("player2Select"),
+    document.getElementById("headPlayer1"),
+    document.getElementById("headPlayer2")
+  ];
+  selects.forEach(select => {
+    select.innerHTML = "";
+    uniquePlayers.forEach(name => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      select.appendChild(option);
     });
+  });
+}
+
+document.getElementById("matchForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!currentUser) {
+    alert("You must be logged in to record a match.");
+    return;
+  }
+  const p1 = document.getElementById("player1Select").value;
+  const p2 = document.getElementById("player2Select").value;
+  const s1 = parseInt(document.getElementById("score1").value);
+  const s2 = parseInt(document.getElementById("score2").value);
+  if (p1 === p2) {
+    alert("Players must be different.");
+    return;
+  }
+  if (isNaN(s1) || isNaN(s2)) {
+    alert("Enter valid scores.");
+    return;
+  }
+  await addDoc(collection(db, "matches"), {
+    player1: p1,
+    player2: p2,
+    score1: s1,
+    score2: s2,
+    timestamp: new Date()
+  });
+  alert("Match recorded!");
+  document.getElementById("matchForm").reset();
+  await populatePlayers();
+});
+
+
 
     async function loadLeaderboard() {
       const matchesSnapshot = await getDocs(collection(db, "matches"));
