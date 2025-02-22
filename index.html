@@ -109,21 +109,6 @@
 
 
 document.getElementById("registerBtn").addEventListener("click", async () => {
-  
-});
-  document.getElementById("loginBtn").addEventListener("click", async () => {
-  const selectedName = document.getElementById("userSelect").value;
-  if (!selectedName) {
-    alert("Please select a name.");
-    return;
-  }
-  currentUser = selectedName;
-  document.getElementById("registration").classList.add("hidden");
-  document.getElementById("mainApp").classList.remove("hidden");
-  document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
-  await populatePlayers();
-});
-
   const nameInput = document.getElementById("username").value.trim();
   if (!nameInput) {
     alert("Please enter a name.");
@@ -148,6 +133,21 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
   document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
   await populatePlayers();
 });
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+  const selectedName = document.getElementById("userSelect").value;
+  if (!selectedName) {
+    alert("Please select a name.");
+    return;
+  }
+  currentUser = selectedName;
+  document.getElementById("registration").classList.add("hidden");
+  document.getElementById("mainApp").classList.remove("hidden");
+  document.getElementById("welcomeMsg").textContent = "Hello, " + currentUser + "!";
+  await populatePlayers();
+});
+
+ 
 
 async function populatePlayers() {
   const playersSnapshot = await getDocs(collection(db, "players"));
@@ -267,6 +267,9 @@ function showTab(tabId) {
   });
   document.getElementById(tabId).classList.remove("hidden");
 }
+    
+await populatePlayers();
+await loadLeaderboard();
   </script>
 </body>
 </html>
